@@ -404,7 +404,7 @@ const Dashboard: React.FC = () => {
                             label: {
                               content: 'Current Run',
                               display: true,
-                              position: 'top',
+                              position: 'start',
                               font: {
                                 weight: 'bold',
                                 size: 12,
