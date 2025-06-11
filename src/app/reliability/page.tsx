@@ -5,6 +5,7 @@ import { Pie, Line } from 'react-chartjs-2';
 import { Chart, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title as ChartTitle } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 Chart.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, ChartTitle, annotationPlugin);
 
 const sampleConversationsData = [
@@ -73,9 +74,9 @@ const Dashboard: React.FC = () => {
       <aside className="w-64 bg-white border-r flex flex-col">
         <div className="h-16 flex items-center px-6 border-b font-bold text-lg">Collinear</div>
         <nav className="flex-1 px-4 py-6 space-y-2">
-          <a href="/dashboard" className={`block py-2 px-3 rounded text-gray-900 ${pathname === '/dashboard' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-100'}`}>Assess - Safety</a>
-          <a href="/reliability" className={`block py-2 px-3 rounded text-gray-900 ${pathname === '/reliability' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-100'}`}>Assess - Reliability</a>
-          <a href="/performance" className={`block py-2 px-3 rounded text-gray-900 ${pathname === '/performance' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-100'}`}>Assess - Performance</a>
+          <Link href="/" className={`block py-2 px-3 rounded text-gray-900 ${pathname === '/' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-100'}`}>Assess - Safety</Link>
+          <Link href="/reliability" className={`block py-2 px-3 rounded text-gray-900 ${pathname === '/reliability' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-100'}`}>Assess - Reliability</Link>
+          <Link href="/performance" className={`block py-2 px-3 rounded text-gray-900 ${pathname === '/performance' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-100'}`}>Assess - Performance</Link>
         </nav>
       </aside>
 
