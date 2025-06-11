@@ -403,7 +403,7 @@ const Dashboard: React.FC = () => {
                             borderDash: [5, 5],
                             label: {
                               content: 'Current Run',
-                              enabled: true,
+                              display: true,
                               position: 'top',
                               font: {
                                 weight: 'bold',
