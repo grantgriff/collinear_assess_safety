@@ -38,9 +38,16 @@ const Dashboard: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('All Statuses');
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
   const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
 
   const pieRef = useRef<any>(null);
-  const [pieData, setPieData] = useState({
+  const [scoreDistribution, setScoreDistribution] = useState<Array<{ score: number; count: number; percentage: number }>>([]);
+
+  // Calculate average Likert score
+  const totalScore = sampleConversationsData.reduce((sum, conv) => sum + parseInt(conv.score.split('/')[0]), 0);
+  const avgLikertScore = sampleConversationsData.length > 0 ? (totalScore / sampleConversationsData.length).toFixed(1) : '0.0';
+
+  const pieData = {
     labels: ['Pass', 'Fail'],
     datasets: [
       {
@@ -49,7 +56,16 @@ const Dashboard: React.FC = () => {
         borderWidth: 0,
       },
     ],
-  });
+  };
+
+  const scoreColors = [
+    '#FB8C00', // darkest
+    '#FFB74D',
+    '#FFCDD2',
+    '#FFEBEE',
+    '#FFE0E0',
+    '#FFF5F5', // lightest
+  ];
 
   const filteredConversations = sampleConversationsData.filter(conv => {
     const statusMatch = selectedStatus === 'All Statuses' || conv.status === selectedStatus;
@@ -74,7 +90,7 @@ const Dashboard: React.FC = () => {
       <aside className="w-64 bg-white border-r flex flex-col">
         <div className="h-16 flex items-center px-6 border-b font-bold text-lg">Collinear</div>
         <nav className="flex-1 px-4 py-6 space-y-2">
-          <Link href="/" className={`block py-2 px-3 rounded text-gray-900 ${pathname === '/' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-100'}`}>Assess - Safety</Link>
+          <Link href="/dashboard" className={`block py-2 px-3 rounded text-gray-900 ${pathname === '/dashboard' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-100'}`}>Assess - Safety</Link>
           <Link href="/reliability" className={`block py-2 px-3 rounded text-gray-900 ${pathname === '/reliability' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-100'}`}>Assess - Reliability</Link>
           <Link href="/performance" className={`block py-2 px-3 rounded text-gray-900 ${pathname === '/performance' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-100'}`}>Assess - Performance</Link>
         </nav>
@@ -102,11 +118,12 @@ const Dashboard: React.FC = () => {
           <div className="grid grid-cols-2 gap-6 mb-4">
             <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center">
               <div className="text-3xl font-bold text-gray-900">94.2%</div>
-              <div className="text-gray-500 mt-1">Success Rate</div>
+              <div className="text-gray-500 mt-1">Pass Rate</div>
+              <p className="text-xs text-gray-400 mt-1">Note: Pass rate is determined by the percentage of conversations considered as passing.</p>
             </div>
             <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center">
-              <div className="text-3xl font-bold text-gray-900">10</div>
-              <div className="text-gray-500 mt-1">Responses</div>
+              <div className="text-3xl font-bold text-gray-900">100</div>
+              <div className="text-gray-500 mt-1">Conversations</div>
             </div>
           </div>
           <div className="grid grid-cols-2 mb-8">
@@ -120,19 +137,21 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 border-b flex space-x-8 items-center">
-          <button
-            className={`pb-2 font-medium ${activeTab === 'metrics' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('metrics')}
-          >
-            Metrics
-          </button>
-          <button
-            className={`pb-2 font-medium ${activeTab === 'conversations' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('conversations')}
-          >
-            Conversations
-          </button>
+        <div className="mb-6 border-b flex justify-between space-x-8 items-center">
+          <div className="flex space-x-8 flex-grow">
+            <button
+              className={`pb-2 font-medium ${activeTab === 'metrics' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+              onClick={() => setActiveTab('metrics')}
+            >
+              Metrics
+            </button>
+            <button
+              className={`pb-2 font-medium ${activeTab === 'conversations' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+              onClick={() => setActiveTab('conversations')}
+            >
+              Conversations
+            </button>
+          </div>
 
           {/* New Buttons on the right */}
           <div className="ml-auto flex space-x-4">
@@ -209,19 +228,29 @@ const Dashboard: React.FC = () => {
                       Top Strengths
                     </button>
                   </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="compareToggle"
+                      className="mr-2"
+                      checked={compareMode}
+                      onChange={() => setCompareMode(!compareMode)}
+                    />
+                    <label htmlFor="compareToggle" className="text-sm text-gray-700">Compare to Latest Run</label>
+                  </div>
                 </div>
                 {categoryView === 'weaknesses' ? (
                   <div>
                     {[ // Top Weaknesses Data
-                      { label: 'Hate Speech', value: 23, change: -5 },
-                      { label: 'Harassment', value: 18, change: -2 },
-                      { label: 'Violence', value: 15, change: 1 },
-                      { label: 'Sexual Content', value: 12, change: 3 },
-                      { label: 'Self-harm', value: 10, change: 0 },
-                      { label: 'Spam', value: 8, change: -1 },
-                      { label: 'Misinformation', value: 6, change: 2 },
-                      { label: 'Bullying', value: 4, change: -3 },
-                      { label: 'Toxicity', value: 2, change: -1 },
+                      { label: 'Latency', value: 23, change: -5 },
+                      { label: 'Error Rate', value: 18, change: -2 },
+                      { label: 'Throughput', value: 15, change: 1 },
+                      { label: 'Scalability', value: 12, change: 3 },
+                      { label: 'Response Time', value: 10, change: 0 },
+                      { label: 'Downtime', value: 8, change: -1 },
+                      { label: 'Resource Usage', value: 6, change: 2 },
+                      { label: 'Cost Efficiency', value: 4, change: -3 },
+                      { label: 'Security Vulnerabilities', value: 2, change: -1 },
                       { label: 'Other', value: 1, change: 0 },
                     ].map((cat, i, arr) => {
                       // Red gradient: darkest at top, lightest at bottom
@@ -260,10 +289,16 @@ const Dashboard: React.FC = () => {
                                 className="h-2 rounded-full absolute top-0 left-0"
                                 style={{ width: `${percent * 100}%`, background: barColor }}
                               ></div>
+                              {compareMode && cat.change !== undefined && (
+                                <div
+                                  className="h-2 rounded-full absolute top-0 left-0 bg-gray-500"
+                                  style={{ width: `2px`, left: `${((cat.value - cat.change) / max) * 100}%` }}
+                                ></div>
+                              )}
                             </div>
                           </div>
                           <div className="w-24 text-right text-gray-900 font-medium text-sm">
-                            {cat.value} <span className={`${changeColor} text-xs`}>({changePrefix}{cat.change}%)</span>
+                            {cat.value} {compareMode && <span className={`${changeColor} text-xs`}>({changePrefix}{cat.change}%)</span>}
                           </div>
                         </button>
                       );
@@ -272,16 +307,16 @@ const Dashboard: React.FC = () => {
                 ) : (
                   <div>
                     {[ // Top Strengths Data
-                      { label: 'Clarity', value: 25, change: 5 },
-                      { label: 'Helpfulness', value: 22, change: 3 },
-                      { label: 'Politeness', value: 20, change: 1 },
-                      { label: 'Accuracy', value: 18, change: 0 },
-                      { label: 'Efficiency', value: 16, change: -2 },
-                      { label: 'Completeness', value: 14, change: -1 },
-                      { label: 'Responsiveness', value: 12, change: 4 },
-                      { label: 'Empathy', value: 10, change: 2 },
-                      { label: 'Conciseness', value: 8, change: -3 },
-                      { label: 'Neutrality', value: 6, change: 0 },
+                      { label: 'Uptime', value: 25, change: 5 },
+                      { label: 'Low Latency', value: 22, change: 3 },
+                      { label: 'High Throughput', value: 20, change: 1 },
+                      { label: 'High Scalability', value: 18, change: 0 },
+                      { label: 'Fast Response Time', value: 16, change: -2 },
+                      { label: 'Cost Efficiency', value: 14, change: -1 },
+                      { label: 'Security Robustness', value: 12, change: 4 },
+                      { label: 'Maintainability', value: 10, change: 2 },
+                      { label: 'Error Handling', value: 8, change: -3 },
+                      { label: 'Reliability', value: 6, change: 0 },
                     ].map((cat, i, arr) => {
                       // Green gradient: darkest at top, lightest at bottom
                       const greenShades = [
@@ -319,128 +354,53 @@ const Dashboard: React.FC = () => {
                                 className="h-2 rounded-full absolute top-0 left-0"
                                 style={{ width: `${percent * 100}%`, background: barColor }}
                               ></div>
+                              {compareMode && cat.change !== undefined && (
+                                <div
+                                  className="h-2 rounded-full absolute top-0 left-0 bg-gray-500"
+                                  style={{ width: `2px`, left: `${((cat.value - cat.change) / max) * 100}%` }}
+                                ></div>
+                              )}
                             </div>
                           </div>
                           <div className="w-24 text-right text-gray-900 font-medium text-sm">
-                            {cat.value} <span className={`${changeColor} text-xs`}>({changePrefix}{cat.change}%)</span>
+                            {cat.value} {compareMode && <span className={`${changeColor} text-xs`}>({changePrefix}{cat.change}%)</span>}
                           </div>
                         </button>
                       );
                     })}
                   </div>
                 )}
+                {compareMode && (
+                  <div className="mt-4 text-sm text-gray-600 flex flex-col items-center justify-center text-center">
+                    <div className="flex items-center mb-1">
+                      <span className="inline-block w-4 h-1 bg-gray-500 mr-2"></span> Previous Run Value
+                    </div>
+                    <p className="text-xs">Note: Comparing to last runs only compares this run to the last recorded run of this type with the same judge.</p>
+                  </div>
+                )}
               </div>
             </div>
-            {/* Performance Over Time */}
-            <div className="bg-white rounded shadow p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <span className="mr-2">📈</span>
-                  <span className="font-semibold text-lg text-gray-900">Performance Over Time</span>
-                </div>
-                {/* Filter Button */}
-                <div className="relative">
-                  <select
-                    className="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-md px-3 py-1 pr-8 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                  >
-                    <option value="All Categories">All Categories</option>
-                    <option value="Hate Speech">Hate Speech</option>
-                    <option value="Harassment">Harassment</option>
-                    <option value="Violence">Violence</option>
-                    <option value="Sexual Content">Sexual Content</option>
-                    <option value="Self-harm">Self-harm</option>
-                    <option value="Spam">Spam</option>
-                    <option value="Misinformation">Misinformation</option>
-                    <option value="Bullying">Bullying</option>
-                    <option value="Toxicity">Toxicity</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
+            {/* Next Steps Panel */}
+            <div className="bg-white rounded-xl shadow p-6 mb-8">
+              <div className="flex items-center mb-4">
+                <span className="mr-2">💡</span>
+                <span className="font-semibold text-lg text-gray-900">Next Steps</span>
               </div>
-              <div className="h-64 flex items-center justify-center">
-                <Line
-                  data={{
-                    labels: ['Run 1', 'Run 2', 'Run 3', 'Run 4', 'Run 5'],
-                    datasets: [
-                      {
-                        label: '% Passed Responses',
-                        data: [50, 65, 78, 85, 94],
-                        fill: false,
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1,
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: { display: false },
-                      title: {
-                        display: true,
-                        text: 'Performance Over Time',
-                        position: 'top',
-                        align: 'start',
-                        font: { size: 16, weight: 'bold' },
-                        color: '#1F2937', // text-gray-900 equivalent
-                      },
-                      tooltip: {
-                        callbacks: {
-                          label: function(context) {
-                            return `${context.dataset.label}: ${context.parsed.y}%`;
-                          },
-                        },
-                      },
-                      annotation: {
-                        annotations: {
-                          line1: {
-                            type: 'line',
-                            xMin: 'Run 5',
-                            xMax: 'Run 5',
-                            borderColor: '#FFA726', // Orange color for the dotted line
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            label: {
-                              content: 'Current Run',
-                              enabled: true,
-                              position: 'top',
-                              font: {
-                                weight: 'bold',
-                                size: 12,
-                                color: '#FFA726',
-                              },
-                              backgroundColor: 'rgba(255, 167, 38, 0.2)',
-                              padding: 6,
-                              borderRadius: 4,
-                            },
-                          },
-                        },
-                      },
-                    },
-                    scales: {
-                      x: {
-                        title: {
-                          display: true,
-                          text: 'Run Number',
-                          color: '#1F2937',
-                        },
-                        grid: { display: false },
-                      },
-                      y: {
-                        title: {
-                          display: true,
-                          text: '% of Passed Responses',
-                          color: '#1F2937',
-                        },
-                        min: 0,
-                        max: 100,
-                        ticks: { callback: (value) => `${value}%` },
-                      },
-                    },
-                  }}
-                />
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <span className="text-blue-500 mr-3 text-2xl">&#x2460;</span>
+                  <div>
+                    <h3 className="font-medium text-gray-900">Compare</h3>
+                    <p className="text-gray-600">Contextualize this run's performance, strengths, and weaknesses to other comparable runs side-by-side in the <Link href="#" className="text-blue-700 underline">Compare page</Link>.</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-blue-500 mr-3 text-2xl">&#x2461;</span>
+                  <div>
+                    <h3 className="font-medium text-gray-900">Curate</h3>
+                    <p className="text-gray-600">Create specialized and hyper-specific datasets to use for post-training efforts through <Link href="#" className="text-blue-700 underline">data curation runs</Link> to target your tool's key weaknesses.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
